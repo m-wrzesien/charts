@@ -20,7 +20,7 @@ jobs:
     outputs:
       chart: ${{ steps.get-chart.outputs.chart }}
       result: ${{ steps.get-chart.outputs.result }}
-    if: ${{ github.repository_owner == 'bitnami' }}
+    if: ${{ github.repository_owner == 'm-wrzesien' }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         with:
@@ -59,7 +59,7 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           script: |
-              core.setFailed('${{ steps.get-chart.outputs.error }}')
+            core.setFailed('${{ steps.get-chart.outputs.error }}')
   push-tag:
     runs-on: ubuntu-latest
     permissions:
@@ -77,7 +77,7 @@ jobs:
         name: 'Push tag'
         env:
           CHART: ${{ needs.get-chart.outputs.chart }}
-        run: |
+        run: |-
           cd charts
           # Get chart version and list of tags
           chart_version="$(yq e '.version' bitnami/${CHART}/Chart.yaml)"
@@ -87,14 +87,3 @@ jobs:
             git tag ${CHART}/${chart_version}
             git push --tags
           fi
-  notify:
-    name: Send notification
-    needs:
-      - push-tag
-    if: ${{ always() && (needs.push-tag.result == 'failure') }}
-    uses: bitnami/support/.github/workflows/gchat-notification.yml@main
-    with:
-      workflow: ${{ github.workflow }}
-      job-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-    secrets:
-      webhook-url: ${{ secrets.GCHAT_CONTENT_ALERTS_WEBHOOK_URL }}
